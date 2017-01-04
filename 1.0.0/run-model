@@ -1,0 +1,134 @@
+#!/bin/bash
+#
+# AUTHOR: Kate Fossell / John Exby
+# DATE: 15 Dec 2016
+# PURPOSE: Script created for use in UBC classroom for docker
+#   wrf runs. Allows user to define local paths
+#   input conditions (e.g. gfs), namelist.input and namelist.wps,
+#   and output locations.  
+#
+# Assumes wrf binary image has been built or can be pulled from public hub.docker.com
+# >> cd  <prefix>/bww-ubc-class/1.0.0/ubc-wrf/ ; docker build -t ubc-wrf .
+#
+#----------------------------------------------------------#
+#-------------- START User Edit Seciton -------------------#
+#
+# See NOTES far below for description for options
+# MUST edit the BWWDATADIR parameter!
+# for macOS:
+export BWWDATADIR=/Users/<MYID>/bww-ubc-class/1.0.0
+#
+# for Windows:??
+# export BWWDATADIR=C:\My Documents\bww-ubc-class\1.0.0
+#
+# Optional Edit additional 6 data parameters if needed:
+#export LOCAL_GEOGRID=$BWWDATADIR/geog
+#export LOCAL_ICS=$BWWDATADIR/nam_ics/
+export LOCAL_NML=$BWWDATADIR/nam_ics/
+export CONTR_NAME=ubc_run1_np2
+export LOCAL_OUT=$BWWDATADIR/ubc_wrfout/$CONTR_NAME
+export WRF_IMAGE_NAME=bigwxwrf/ubc-wrf
+#
+#
+# Optional Edit 5 parameters for running WRF
+export ncpus=2
+export skip_geog=false
+export skip_real=false
+export icpref="awip32."
+export vtable=NAM
+#
+#
+#-------------- END User Edit Seciton ---------------------#
+
+
+#----------------------------------------------------------#
+#-------------- Set Options -------------------------------#
+# Logic sets correct runtime options based on
+# user input above
+#----------------------------------------------------------#
+if [ "$skip_geog" = true ]; then
+   skip1="-skip geo"
+else
+   skip1=""
+fi
+
+if [ "$skip_real" = true ]; then
+   skip2="-skip real"
+else
+   skip2=""
+fi
+
+#---------------Run WRF -----------------------------------#
+# Creates docker run command from options selected above
+#----------------------------------------------------------#
+#
+echo Instantiate data container which holds static GEOG data set
+docker create -v /WPS_GEOG --name ubc-geog bigwxwrf/ncar-wpsgeog
+echo
+echo Instantiate data container which holds NAM AWIP ICBC ...
+docker create -v /wrfinput --name ubc-namawip bigwxwrf/wrfinput-namawip
+echo
+echo run WRF model....
+docker run -it --volumes-from ubc-geog --volumes-from ubc-namawip -v $LOCAL_NML:/namelists -v $LOCAL_OUT:/wrfoutput  --name $CONTR_NAME   $WRF_IMAGE_NAME /wrf/run-wrf -np $ncpus $skip1 $skip2 -ic_data_prefix $icpref -vtable $vtable -namelist /namelists
+#
+# OR
+#
+# docker run --rm -it --volumes-from ubc-geog --volumes-from ubc-namawip -v $LOCAL_NML:/namelists -v $LOCAL_OUT:/wrfoutput  --name $CONTR_NAME   $WRF_IMAGE_NAME /bin/bash
+#
+#
+#-------------- Run NCL -----------------------------------#
+# Creates docker run command to use bigwxwrf/ncar-ncl image 
+# to creat plots and .gif files
+#----------------------------------------------------------#
+echo Perform NCL post processing
+docker run --rm -it -v $LOCAL_OUT:/wrfoutput bigwxwrf/ncar-ncl
+echo
+
+#-------------- View images -------------------------------#
+# Go to local directory of output and 
+# list the NCL files
+#----------------------------------------------------------#
+ls $LOCAL_OUT
+# the following 2 commands only work on MacOS !
+# open *.pdf *.png
+# open -a Safari *.gif
+# 
+#----------------------------------------------------------#
+# NOTES
+#----------------------------------------------------------#
+# 
+# Description of local path parameters:
+#
+# LOCAL_GEOGRID - path where geo_em.d01.nc is located
+# LOCAL_ICS     - path where input data are located
+# LOCAL_NML     - path where namelist.input and namelist.wps are located
+# LOCAL_OUT     - path where wrfout and ncl images should be put
+# CONTR_NAME    - name of your container
+# WRF_IMAGE_NAME    - name of wrf image (i.e. ubc_wrf)
+#
+#
+# Description of runtime options:
+#
+# ncpus     - number of cpus, e.g. 2
+# skip_geog - skip geogrid? true or false
+# skip_real - skip real.exe? true or false
+# icpref    - prefix for the input data, use quotes; e.g. "gfs_"
+# vtable    - suffix for Vtable to use; e.g. GFS
+# 
+#
+# Description of docker run command components:
+#
+# "-v $LOCAL_GEOGRID:/wrf/geogrid" ==> if local data, mount local geo_em.d01.nc;
+#         if invalid local path, copy in run-wrf will fail, existing conus geo_em.d01.nc in WPS dir will be used
+# "-v $LOCAL_ICS:/wrfinput" ==>  if local data, mount local path to container path for ics
+# "-v $LOCAL_NML:/namelists" ==> mount namelist dir
+# "-v $LOCAL_OUT:/wrfoutput" ==> mount output dir
+# "--name $CONTR_NAME" ==> name container
+# "$WRF_IMAGE_NAME" ==> container image name, wrf binaries stored within
+#
+# /wrf/run-wrf -np $ncpus $skip1 $skip2 -ic_data_prefix $icpref -vtable $vtable  -namelist /namelists ==> run-wrf command for container scripts
+# -namelist /namelists ==> directory within the container. Default in run-wrf looks for /wrfinput with icbcs
+#                          matches the mount directory name, e.g. "/namelists" if specifying.
+# /wrfoutput ==> directory within the container
+#
+#END
