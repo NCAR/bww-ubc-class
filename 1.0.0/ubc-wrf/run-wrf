@@ -108,7 +108,7 @@ cp -f $NML_DIR/namelist.wps .
 cp -f /wrf/WPS/ungrib/Variable_Tables/Vtable.${vtable} Vtable
 
 # Make copy of namelist in output dir
-  cp $WRF_BUILD/WPS/namelist.wps $OUTPUT_DIR
+  cp $NML_DIR/namelist.wps $OUTPUT_DIR
 
 ##################################
 #     Run the geogrid program    #
