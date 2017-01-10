@@ -27,7 +27,7 @@ ubc_run1_np2:
     - wpsgeog
     - wrfinput
    volumes:
-    - c:\bww-ubc-class\1.0.0\nam_ics:\namelists
+    - c:\bww-ubc-class\1.0.0\nam_ics:/namelists
     - c:\bww-ubc-class\1.0.0\ubc_wrfout\ubc_run1_np2:/wrfoutput
    command: [/wrf/run-wrf, -np, "2", -ic_data_prefix, "awip32.", -vtable, "NAM", -namelist, "/namelists"]
 #
