@@ -298,7 +298,7 @@ fi # end skip_real = false
 ##################################
 
 # Command for openmpi wrf in Docker world
-mpirun --allow-run-as-root -np $num_procs ./wrf.exe
+mpirun --allow-run-as-root --mca pml ob1 -np $num_procs ./wrf.exe
 
 # Check success
   ls -ls /$OUTPUT_DIR/wrfo*
