@@ -1,0 +1,35 @@
+Documentation for the actual Windows docker commands below:
+
+1.  Software Preparation
+Install GitHub Desktop https://desktop.github.com/
+Install docker v1.12.x
+Start Git Shell
+cd \
+git clone https://github.com/NCAR/bww-ubc-class
+cd c:\bww-ubc-class\1.0.0\
+docker run hello-world 
+
+2.  Enable Shared Drives
+Docker > Settings > Shared Drives > check the C Share
+
+Possible firewall issue when using third party security software:
+Enable SMB over TCP on port 445 between 10.0.75.1 and 10.0.75.2
+
+3.  Pull down docker images: (Required in advance of Thursday class due to wifi)
+docker pull bigwxwrf/ubc-wrf
+docker pull bigwxwrf/wrfinput-namawip
+docker pull bigwxwrf/ncar-wpsgeog
+docker pull bigwxwrf/ncar-ncl
+
+For Thursday class:
+4.  Instantiate docker data volumes:
+docker create -v /WPS_GEOG --name ubc-geog bigwxwrf/ncar-wpsgeog
+docker create -v /wrfinput --name ubc-namawip bigwxwrf/wrfinput-namawip
+
+5.  Run the model (takes ~ 20 minutes)
+docker run --rm -it --volumes-from ubc-geog --volumes-from ubc-namawip -v c:\bww-ubc-class\1.0.0\nam_ics\:/namelists -v c:\bww-ubc-class\1.0.0\ubc_wrfout\ubc_run1_np2:/wrfoutput --name ubc_run1_np2 bigwxwrf/ubc-wrf /wrf/run-wrf -np 2 -ic_data_prefix "awip32." -vtable NAM -namelist /namelists
+
+6.  Do the post processing:
+docker run --rm -it -v c:\bww-ubc-class\1.0.0\ubc_wrfout\ubc_run1_np2:/wrfoutput bigwxwrf/ncar-ncl
+
+END

@@ -1,0 +1,42 @@
+#########################################
+#
+# Docker Compose file for ubc-wrf prototype
+# to be used as a template and beta access
+# exby@ucar.edu
+#
+#
+# instantiate WPS geog data volume
+#
+wpsgeog:
+   image: bigwxwrf/ncar-wpsgeog
+#
+#
+# instantiate NAM AWIP ICBC data
+#
+wrfinput:
+   image: bigwxwrf/wrfinput-namawip
+# OR
+#   image: bigwxwrf/ncar-wrfinputkatrina
+#
+#
+# instantiate UBC wrf executable image and run
+# a label for the job
+ubc_run1_np2:
+   image: bigwxwrf/ubc-wrf
+   volumes_from:
+    - wpsgeog
+    - wrfinput
+   volumes:
+    - c:\bww-ubc-class\1.0.0\nam_ics:\namelists
+    - c:\bww-ubc-class\1.0.0\ubc_wrfout\ubc_run1_np2:/wrfoutput
+   command: [/wrf/run-wrf, -np, "2", -ic_data_prefix, "awip32.", -vtable, "NAM", -namelist, "/namelists"]
+#
+#
+# NCL post-proc 
+#
+#ncl:
+#   image: bigwxwrf/ncar-ncl
+#   volumes:
+#   - c:\bww-ubc-class\1.0.0\ubc_wrfout\ubc_run1_np2:/wrfoutput
+# the above same as:
+#  docker run -it -v c:\bww-ubc-class\1.0.0\ubc_wrfout\ubc_run1_np2:/wrfoutput bigwxwrf/ncar-ncl
