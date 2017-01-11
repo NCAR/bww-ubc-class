@@ -69,7 +69,7 @@ echo Instantiate data container which holds NAM AWIP ICBC ...
 docker create -v /wrfinput --name ubc-namawip bigwxwrf/wrfinput-namawip
 echo
 echo run WRF model....
-docker run -it --volumes-from ubc-geog --volumes-from ubc-namawip -v $LOCAL_NML:/namelists -v $LOCAL_OUT:/wrfoutput  --name $CONTR_NAME   $WRF_IMAGE_NAME /wrf/run-wrf -np $ncpus $skip1 $skip2 -ic_data_prefix $icpref -vtable $vtable -namelist /namelists
+docker run --rm -it --volumes-from ubc-geog --volumes-from ubc-namawip -v $LOCAL_NML:/namelists -v $LOCAL_OUT:/wrfoutput  --name $CONTR_NAME   $WRF_IMAGE_NAME /wrf/run-wrf -np $ncpus $skip1 $skip2 -ic_data_prefix $icpref -vtable $vtable -namelist /namelists
 #
 # OR
 #
